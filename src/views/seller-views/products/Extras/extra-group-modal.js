@@ -1,0 +1,132 @@
+import { useEffect, useState } from 'react';
+import { Button, Form, Input, Modal } from 'antd';
+import { useTranslation } from 'react-i18next';
+import LanguageList from 'components/language-list';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import extraService from 'services/seller/extras';
+import { toast } from 'react-toastify';
+import getTranslationFields from 'helpers/getTranslationFields';
+import Loading from 'components/loading';
+import { setRefetch } from 'redux/slices/menu';
+import getLanguageFields from 'helpers/getLanguageFields';
+import { MODELS } from '../../../../constants';
+import AiTranslation from '../../../../components/ai-translation/ai-translation';
+
+export default function ExtraGroupModal({ modal, handleCancel, onSuccess }) {
+  const [form] = Form.useForm();
+  const { t } = useTranslation();
+  const dispatch = useDispatch();
+
+  const { languages, defaultLang } = useSelector(
+    (state) => state.formLang,
+    shallowEqual,
+  );
+  const { activeMenu } = useSelector((state) => state.menu, shallowEqual);
+
+  const [loadingBtn, setLoadingBtn] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const fetchExtraGroup = (id) => {
+    setLoading(true);
+    extraService
+      .getGroupById(id)
+      .then((res) => {
+        const data = res.data;
+        form.setFieldsValue({ ...data, ...getLanguageFields(languages, data) });
+      })
+      .finally(() => setLoading(false));
+  };
+
+  const createExtraGroup = (body) => {
+    setLoadingBtn(true);
+    extraService
+      .createGroup(body)
+      .then(() => {
+        toast.success(t('successfully.created'));
+        handleCancel();
+        dispatch(setRefetch(activeMenu));
+        !!onSuccess && onSuccess();
+      })
+      .finally(() => setLoadingBtn(false));
+  };
+
+  const onFinish = (values) => {
+    const body = {
+      title: getTranslationFields(languages, values),
+      type: 'text',
+    };
+    if (modal?.id) {
+      updateExtraGroup(modal?.id, body);
+    } else {
+      createExtraGroup(body);
+    }
+  };
+
+  const updateExtraGroup = (id, body) => {
+    setLoadingBtn(true);
+    extraService
+      .updateGroup(id, body)
+      .then(() => {
+        toast.success(t('successfully.updated'));
+        dispatch(setRefetch(activeMenu));
+        handleCancel();
+      })
+      .finally(() => setLoadingBtn(false));
+  };
+
+  useEffect(() => {
+    if (modal?.id) {
+      fetchExtraGroup(modal.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modal]);
+
+  return (
+    <Modal
+      title={modal?.id ? t('edit.extra.group') : t('add.extra.group')}
+      visible={!!modal}
+      onCancel={handleCancel}
+      footer={[
+        <Button key='cancel-button-group' type='default' onClick={handleCancel}>
+          {t('cancel')}
+        </Button>,
+        <Button
+          key='save-button-group'
+          type='primary'
+          onClick={() => form.submit()}
+          loading={loadingBtn}
+        >
+          {t('save')}
+        </Button>,
+      ]}
+    >
+      {!loading ? (
+        <>
+          <div className='d-flex justify-content-end'>
+            <LanguageList />
+          </div>
+          <Form layout='vertical' form={form} onFinish={onFinish}>
+            {languages.map((item) => (
+              <Form.Item
+                key={'title' + item.locale}
+                rules={[
+                  {
+                    required: item.locale === defaultLang,
+                    message: t('required'),
+                  },
+                ]}
+                name={`title[${item.locale}]`}
+                label={t('title')}
+                hidden={item.locale !== defaultLang}
+              >
+                <Input placeholder={t('title')} />
+              </Form.Item>
+            ))}
+          </Form>
+        </>
+      ) : (
+        <Loading />
+      )}
+    </Modal>
+  );
+}
