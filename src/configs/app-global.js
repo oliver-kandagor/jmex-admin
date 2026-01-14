@@ -1,7 +1,7 @@
 // project settings, you can change only PROJECT_NAME, BASE_URL and WEBSITE_URL otherwise it can break the app
 export const PROJECT_NAME = 'Jmex';
 export const BASE_URL =
-  process.env.REACT_APP_BASE_URL || 'https://api.jmex.store';
+  process.env.REACT_APP_BASE_URL || 'https://api.shujaacode.xyz/';
 export const WEBSITE_URL = 'jmex.store';
 export const api_url = BASE_URL + '/api/v1/';
 export const api_url_admin = BASE_URL + '/api/v1/dashboard/admin/';
