@@ -14,7 +14,7 @@ const installationService = {
     request.post('dashboard/admin/backup/history', {}, { params }),
   getBackupHistory: (params) =>
     request.get('dashboard/admin/backup/history', { params }),
-  checkLicence: (data) => request.post(`install/check/licence`, data),
+//  checkLicence: (data) => request.post(`install/check/licence`, data),
 };
 
 export default installationService;
